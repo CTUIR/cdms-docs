@@ -1,9 +1,8 @@
-ctuir
-=====
+cdms-dev
+========
 
-This repository contains documents relevate to the CTUIR's DNR Data Management Improvement Project.  
+Centralized Data Management System (Project Tracker) Project Documentation
 
-All documents remain property of the CTUIR and are made available for information purposes only.
-To use for any purpose you must contact the CTUIR for written permission.
+This system is (C) 2014 by the Confederated Tribes of the Umatilla Indian Reservation.  Any use is subject to our license agreement included in this repository.
 
-All documents in this repository are (C)2014, CTUIR.  All rights reserved.
+THE CDMS AND COVERED CODE IS PROVIDED UNDER THIS LICENSE ON AN "AS IS" BASIS, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, WITHOUT LIMITATION, WARRANTIES THAT THE COVERED CODE IS FREE OF DEFECTS, MERCHANTABLE, FIT FOR A PARTICULAR PURPOSE OR NON-INFRINGING. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE COVERED CODE IS WITH LICENSEE. SHOULD ANY COVERED CODE PROVE DEFECTIVE IN ANY RESPECT, LICENSEE (NOT THE CTUIR OR ANY OTHER CONTRIBUTOR) ASSUMES THE COST OF ANY NECESSARY SERVICING, REPAIR OR CORRECTION. THIS DISCLAIMER OF WARRANTY CONSTITUTES AN ESSENTIAL PART OF THIS LICENSE. NO USE OF ANY COVERED CODE IS AUTHORIZED HEREUNDER EXCEPT UNDER THIS DISCLAIMER.
