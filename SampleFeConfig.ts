@@ -32,6 +32,9 @@ export let DISPLAY_NAME = "CDMS 3 Dev"; // Whatever the latest version is.
 export let CURRENT_VERSION = "3.0"; // Whatever the latest version is.
 export let PUBLIC_OR_PRIVATE = "public"; // Paluut = public, CDMS_Priv = private.
 
+// Example gis-dev15
+export let HOST_SERVER = "[YourHostServerName]";
+
 //Change these to point to your own webserver directories
 // Example 'https://mysite.myorg.org/services/'
 export let serviceUrl = 'https://[YourSite].[YourOrganization].[com, org, etc.]/services';
@@ -56,12 +59,17 @@ export let REPORTSERVER_URL = 'http://[YourSqlServerName]/Reports/Pages/Folder.a
 
 // Location for local CDMS documentation.
 // Example "http://TheSite.TheOrg.org/ThePathToTheDocument/TheDocument.pdf"
-export let CDMS_DOCUMENTATION_URL = "https://github.com/CTUIR/cdms-docs";
+export let CDMS_DOCUMENTATION_URL = "https://gis.ctuir.org/wp-content/uploads/2019/03/CDMSVersion2UserGuide.pdf";
+
+// URL for ESRI AGOL map server.
+export let ESRI_AGOL_URL = "http://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer";
+
+// Example YourRestService.YourOrg.com
+export let YOUR_FEATURE_SERVICE_DOMAIN = "YourRestService.YourOrg.com";
 
 //***********
 // If you use ArcGIS Mapping services; otherwise, comment this out.
-// Example "////MyGisSite.myorg.org/arcgis/reset/services/ProjectPoints/FeatureServer/0"
-export let YOUR_FEATURE_SERVICE_URL = "https://MyGisSite.myorg.org/arcgis/rest/services/ProjectPoints/FeatureServer/0";
+
 
 export let GEOMETRY_SERVICE_URL = "https://MyGisSite.myorg.org/arcgis/rest/services/Utilities/Geometry/GeometryServer";
 //Used as default when creating a new location
@@ -279,10 +287,6 @@ export let datasetActivitiesBasemapConfig = {
         //imageryLayer: { library: "Bing", type: 'BingMapsAerial', Display: 'Aerial' },
         //hybridLayer: { library: "Bing", type: 'BingMapsHybrid', Display: 'Hybrid' },
 };
-
-
-export let MapPointsLayer = "https://restdata.ctuir.org/server/rest/services/CDMS_ProjectPoints_TEST/FeatureServer/0";
-//export let MapPointsLayer = "https://restdata.ctuir.org/arcgis/rest/services/CDMS_ProjectPoints/FeatureServer/0";
 
 //analytics configuration
 declare const ga: any;
