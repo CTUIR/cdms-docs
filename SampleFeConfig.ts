@@ -40,7 +40,7 @@ export let HOST_SERVER = "[YourHostServerName]";
 export let serviceUrl = 'https://[YourSite].[YourOrganization].[com, org, etc.]/services';
 
 // Example 'https://mysite.myorg.org/'
-export let serverUrl = 'https://[YourSite].[YourOrganization].[com, org, etc.]/'; 
+export let serverUrl = 'https://[YourSite].[YourOrganization].[com, org, etc.]/';
 
 // Example 'https://mysite.myorg.org/services/uploads/'
 export let cdmsShareUrl = 'https://[YourSite].[YourOrganization].[com, org, etc.]/services/uploads/';
@@ -75,10 +75,10 @@ export let GEOMETRY_SERVICE_URL = "https://MyGisSite.myorg.org/arcgis/rest/servi
 //Used as default when creating a new location
 export let NAD83_SPATIAL_REFERENCE = 'PROJCS["NAD83(NSRS2007) / UTM zone 11N",GEOGCS["NAD83(NSRS2007)",DATUM["D_",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]';
 export let DEFAULT_LOCATION_PROJECTION_ZONE = {
-                Projection: "NAD83",
-                UTMZone: "11",
-            };   //Used as default when creating a new location
-			
+  Projection: "NAD83",
+  UTMZone: "11",
+};   //Used as default when creating a new location
+
 // These enable the system to autmatically show the correct map and access the correct feature service,
 //  based upon the ENVIRONMENT variable above.
 // For Dev/Test environments
@@ -92,6 +92,21 @@ export let CDMS_POINTS_PROD_URL = "https://MyGisSite.myorg.org/arcgis/reset/serv
 // Obtain a public/free licence from Microsoft Bing and use it in the value below.
 export let BING_KEY = "AuaAtT6zhx..."; //CTUIR's bing key -- only licensed from our server, so get a public/free one and use it
 
+
+// UI Config Options
+export let uiConfig = {
+  logo: "./assets/images/logo.png",
+  background: "../images/YourBackgroundImage.jpg", // background image
+  version: "CDMS v.3.0", // Version text
+  welcomeText: "Columbia River Inter-Tribal Fish Commission", // First line of text above login
+  welcomeSubtext: "Central Data Management System", // Second line of text above login
+  headerText: "CRITFC CDMS", // Top left header text
+  usesMap: false, // Set false to not create points when adding locations/when not using map
+  usesPermits: false,
+
+}
+
+
 // Used in src/appjsLegacy/core/datasets/components/dataset-query/dataset-query.ts
 // This controls how many records are too many to process for a query pull.
 // CTUIR uses this, but Innovate is reworking the Query page.
@@ -103,10 +118,13 @@ export let MAX_DATASET_RECORDS_THRESHOLD = 300000;
 export let NUM_FLOAT_DIGITS = 3;
 
 // The default column width for ag-grid
-export let SystemDefaultColumnWidth = 150; 
+export let SystemDefaultColumnWidth = 150;
+
+// The max records threshold for Excel exports from dataset query
+export let DATASET_RECORDS_EXPORT_FORMAT_THRESHOLD = 500000;
 
 // The user IDs for Admin type users.  These IDs are from dbo.Users in the backend database.
-export let AdminUserIds = [1,2]
+export let AdminUserIds = [1, 2]
 
 
 // The AG grid license.
@@ -136,7 +154,7 @@ export let METADATA_PROPERTY_PROGRAM = 5;
 
 
 //Default system-wide project permission
-export let DEFAULT_PROJECT_PERMISSION = {Permission: { OrgUser: "View", Public: "Hidden" }};
+export let DEFAULT_PROJECT_PERMISSION = { Permission: { OrgUser: "View", Public: "Hidden" } };
 
 
 // Initially, you may need to update these settings.  Once your system is in and established,
@@ -153,7 +171,7 @@ export let FIELD_ROLE_VIRTUAL = 5;
 export let USER_PREFERENCE_LANDINGPAGE = "LandingPage";
 
 // Initial setting for a user's profile.
-export let profile = null; 
+export let profile = null;
 
 // Where is the login page located.
 //export let LOGIN_URL = serverUrl + '/login.html';
@@ -184,10 +202,10 @@ export let SHARINGLEVEL_PUBLICWRITE = 5;
 export let SHARINGLEVEL_REFERENCE_LIBRARY = 6;
 
 export let SharingLevel = {
-    'SHARINGLEVEL_PRIVATE' : "CDMS Only",
-    'SHARINGLEVEL_PUBLICREAD' : "Share to web",
-	'SHARINGLEVEL_GROUPREAD' : "Collaborators",
-	'SHARINGLEVEL_REFERENCE_LIBRARY' : "Reference Library"
+  'SHARINGLEVEL_PRIVATE': "CDMS Only",
+  'SHARINGLEVEL_PUBLICREAD': "Share to web",
+  'SHARINGLEVEL_GROUPREAD': "Collaborators",
+  'SHARINGLEVEL_REFERENCE_LIBRARY': "Reference Library"
 };
 
 // Used in src/appjsLegacy/core/datasets/components/dataset-import/dataset-import.ts
@@ -202,16 +220,16 @@ export let ROWSTATUS_DELETED = 1;
 export let millis_per_h = 3600000;
 export let SystemTimezones = [
   {
-	"Id" : 0,
-    "Name" : "Pacific Standard Time (GMT-08:00)",
-    "Description" : "(GMT-08:00) Pacific Standard Time (US & Canada)",
-    "TimezoneOffset" : -8 * millis_per_h,
-  }, 
+    "Id": 0,
+    "Name": "Pacific Standard Time (GMT-08:00)",
+    "Description": "(GMT-08:00) Pacific Standard Time (US & Canada)",
+    "TimezoneOffset": -8 * millis_per_h,
+  },
   {
-	"Id" : 1,
-    "Name" : "Pacific Daylight Time (GMT-07:00)",
-    "Description" : "(GMT-07:00) Pacific Daylight Time (US & Canada)",
-    "TimezoneOffset" : -7 * millis_per_h,
+    "Id": 1,
+    "Name": "Pacific Daylight Time (GMT-07:00)",
+    "Description": "(GMT-07:00) Pacific Daylight Time (US & Canada)",
+    "TimezoneOffset": -7 * millis_per_h,
   },
   //{
   //"Id" : 2,
@@ -249,10 +267,10 @@ export let SystemTimezones = [
   //  "TimezoneOffset" : -4 * millis_per_h,
   //}
   {
-	"Id" : 8,
-    "Name" : "Greenwich Mean Time (GMT-00:00)",
-    "Description" : "(GMT-00:00) Greenwich Mean Time",
-    "TimezoneOffset" : 0,
+    "Id": 8,
+    "Name": "Greenwich Mean Time (GMT-00:00)",
+    "Description": "(GMT-00:00) Greenwich Mean Time",
+    "TimezoneOffset": 0,
   }
 ];
 
@@ -271,34 +289,34 @@ export let defaultLayer = "imageryLayer";
 
 //used for dataset-activities (standard datasets)
 export let datasetActivitiesBasemapConfig = {
-       // { library: "Esri", type: 'streets', title: 'ESRI Roads'},
-        //{ library: "Esri", type: 'topo', title: 'Topographical'},
-        //{ library: "Esri", type: 'hybrid', title: 'Hybrid' },
+  // { library: "Esri", type: 'streets', title: 'ESRI Roads'},
+  //{ library: "Esri", type: 'topo', title: 'Topographical'},
+  //{ library: "Esri", type: 'hybrid', title: 'Hybrid' },
 
-		// We had problems with Bing, down below, so we switched back to the ESRI map.
-		// Note:  The roadsLayer, imageryLayer, and hybridLayer constants are not in the ESRI map, 
-		// but we use the library to tell which map service to call ~/js/directives/Maps.js			
-        roadsLayer: { library: "Esri", type: "//www.arcgis.com/home/webmap/viewer.html?url=http%3A%2F%2Fserver.arcgisonline.com%2Farcgis%2Frest%2Fservices%2FWorld_Street_Map%2FMapServer&source=sd", Display: 'Roads' },
-		imageryLayer: { library: "Esri", type: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer", Display: 'Aerial' },
+  // We had problems with Bing, down below, so we switched back to the ESRI map.
+  // Note:  The roadsLayer, imageryLayer, and hybridLayer constants are not in the ESRI map, 
+  // but we use the library to tell which map service to call ~/js/directives/Maps.js			
+  roadsLayer: { library: "Esri", type: "//www.arcgis.com/home/webmap/viewer.html?url=http%3A%2F%2Fserver.arcgisonline.com%2Farcgis%2Frest%2Fservices%2FWorld_Street_Map%2FMapServer&source=sd", Display: 'Roads' },
+  imageryLayer: { library: "Esri", type: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer", Display: 'Aerial' },
 
-		
-		// The Bing map is better, but we had problems with it.
-        //roadsLayer: { library: "Bing", type: 'BingMapsRoad', Display: 'Roads' },
-        //imageryLayer: { library: "Bing", type: 'BingMapsAerial', Display: 'Aerial' },
-        //hybridLayer: { library: "Bing", type: 'BingMapsHybrid', Display: 'Hybrid' },
+
+  // The Bing map is better, but we had problems with it.
+  //roadsLayer: { library: "Bing", type: 'BingMapsRoad', Display: 'Roads' },
+  //imageryLayer: { library: "Bing", type: 'BingMapsAerial', Display: 'Aerial' },
+  //hybridLayer: { library: "Bing", type: 'BingMapsHybrid', Display: 'Hybrid' },
 };
 
 //analytics configuration
 declare const ga: any;
 // @ts-ignore
 (function (i, s, o, g, r, a, m) {
-    i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
-        (i[r].q = i[r].q || []).push(arguments)
-    },
-        // @ts-ignore
-        i[r].l = 1 * new Date();
-    a = s.createElement(o),
-        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+  i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+    (i[r].q = i[r].q || []).push(arguments)
+  },
+    // @ts-ignore
+    i[r].l = 1 * new Date();
+  a = s.createElement(o),
+    m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
 })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
 ga('create', ANALYTICS_CODE, 'auto');
 ga('send', 'pageview');
