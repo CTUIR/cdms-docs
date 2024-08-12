@@ -149,6 +149,21 @@ export let SYSTEM_LOCATION_DATASET = 1;
 export let METADATA_ENTITY_PROJECT = 1;
 export let METADATA_ENTITY_DATASETTYPEID = 3;
 
+// metadata values used for project summary pages
+// See database MetadataProperties table
+export let METADATA_PROPERTIES = {
+  Program: 23,
+  Subprogram: 24,
+  Mapimage: 26, // Currenty not used in Tribal CDMS
+  MapimageHtml: 25, // Currenty not used in Tribal CDMS
+  SummaryImage: 11, // Currenty not used in Tribal CDMS
+  SummaryImageHtml: 13, // Currenty not used in Tribal CDMS
+  ProjectGoal: 9,
+  ProjectObjectives: 20,
+  Inputs: 3,
+  Collaborators: 42
+}
+
 // See database, dbo.MetadataProperties)
 export let METADATA_PROPERTY_PROGRAM = 5;
 
