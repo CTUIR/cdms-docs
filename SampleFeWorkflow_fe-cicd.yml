@@ -1,0 +1,192 @@
+# Place this file in .github/workflows
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# Replace [your-org] with your organization name - i.e. Build, Test, and Deploy CTUIR CDMS
+name: Build, Test, and Deploy [your-org] CDMS
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Pick a deployment environment'
+        required: true
+        default: 'build_test_only'
+        type: choice
+        options:
+          - staging
+          - prod
+          - build_test_only
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  check_dispatch_runner:
+    runs-on: [self-hosted, windows, x64, staging]
+    steps:
+      - name: deny
+        if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor) == false }}
+        shell: powershell
+        run:
+          echo '${{github.actor}}, you do not have permission to deploy using ${{github.event_name}}';
+          exit 1;
+      - name: approve
+        shell: powershell
+        if: ${{ github.event_name != 'workflow_dispatch' || contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor) }}
+        run:
+          echo '${{github.actor}} is deploying to ${{inputs.env}}';
+
+  build_and_test:
+    runs-on: [self-hosted, windows, x64, staging]
+    needs: [check_dispatch_runner]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - name: Setup dev configuration file
+      shell: powershell
+      if: ${{inputs.env != 'prod'}}
+      run: >
+        $original_file = "${{vars.DEV_CONFIG_DIR}}\\fe\\config.ts";
+        $destination_file =  "${{github.workspace}}\\src\\appjsLegacy\\config.ts";
+        (Get-Content $original_file) | Foreach-Object {
+            $_ -replace "CONFIG_ENVIRONMENT", "${{vars.DEV_CONFIG_ENV}}" `
+               -replace "CONFIG_DISPLAY_NAME", "${{vars.DEV_DISPLAY_NAME}}" `
+               -replace "CONFIG_CURRENT_VERSION", "${{vars.DEV_CONFIG_CURRENT_VERSION}}" `
+               -replace "CONFIG_PUBLIC_OR_PRIVATE", "${{vars.DEV_CONFIG_PUBLIC_OR_PRIVATE}}" `
+               -replace "CONFIG_SERVER_URL", "${{vars.DEV_CONFIG_SERVER_URL}}" `
+               -replace "CONFIG_REPORT_SERVER_URL", "${{vars.DEV_CONFIG_REPORT_SERVER_URL}}" `
+               -replace "CONFIG_PROJECT_REPORT_SERVER", "${{vars.DEV_CONFIG_PROJECT_REPORT_SERVER}}" `
+               -replace "CONFIG_SYSTEM_LOCATION_DATASET", "${{vars.DEV_CONFIG_SYSTEM_LOCATION_DATASET}}" `
+               -replace "CONFIG_FISHERMEN_DATASETID", "${{vars.DEV_CONFIG_FISHERMEN_DATASETID}}" `
+               -replace "CONFIG_SEASONS_DATASETID", "${{vars.DEV_CONFIG_SEASONS_DATASETID}}" `
+               -replace "CONFIG_SERVICES_LAYER_CONFIG_FARM", "${{vars.DEV_CONFIG_SERVICES_LAYER_CONFIG_FARM}}"`
+               -replace "CONFIG_HOST_SERVER", "${{vars.DEV_HOST_SERVER}}"`
+               -replace "CONFIG_SERVICE_URL", "${{vars.DEV_CONFIG_SERVICE_URL}}"`
+               -replace "CONFIG_DATASET_RECORDS_EXPORT_FORMAT_THRESHOLD", "${{vars.DEV_CONFIG_DATASET_RECORDS_EXPORT_FORMAT_THRESHOLD}}"`
+               -replace "CONFIG_BACKGROUND_IMAGE", "${{vars.UI_CONFIG_BACKGROUND_IMAGE}}"`
+               -replace "CONFIG_VERSION", "${{vars.UI_CONFIG_VERSION}}"`
+               -replace "CONFIG_WELCOME_TEXT", "${{vars.UI_CONFIG_WELCOME_TEXT}}"`
+               -replace "CONFIG_HEADER_TEXT", "${{vars.UI_CONFIG_HEADER_TEXT}}"`
+               -replace "CONFIG_METADATA_PROGRAM", "${{vars.DEV_CONFIG_METADATA_PROGRAM}}"`
+               -replace "CONFIG_METADATA_SUBPROGRAM", "${{vars.DEV_CONFIG_METADATA_SUBPROGRAM}}"`
+               -replace "CONFIG_METADATA_MAPIMAGE", "${{vars.DEV_CONFIG_METADATA_MAPIMAGE}}"`
+               -replace "CONFIG_METADATA_MAP_IMAGE_HTML", "${{vars.DEV_CONFIG_METADATA_MAP_IMAGE_HTML}}"`
+               -replace "CONFIG_METADATA_SUMMARYIMAGE", "${{vars.DEV_CONFIG_METADATA_SUMMARYIMAGE}}"`
+               -replace "CONFIG_METADATA_SUMMARY_IMAGE_HTML", "${{vars.DEV_CONFIG_METADATA_SUMMARY_IMAGE_HTML}}"`
+               -replace "CONFIG_METADATA_PROJECT_GOAL", "${{vars.DEV_CONFIG_METADATA_PROJECT_GOAL}}"`
+               -replace "CONFIG_METADATA_PROJECT_OBJECTIVES", "${{vars.DEV_CONFIG_METADATA_PROJECT_OBJECTIVES}}"`
+               -replace "CONFIG_METADATA_INPUTS", "${{vars.DEV_CONFIG_METADATA_PROJECT_INPUTS}}"`
+               -replace "CONFIG_METADATA_COLLABORATORS", "${{vars.DEV_CONFIG_METADATA_PROJECT_COLLABORATORS}}"`
+               -replace "CONFIG_DATASTORE_ACTIVITYSYSTEMFIELDS", "${{vars.DEV_DATASTORE_ACTIVITYSYSTEMFIELDS}}"
+        } | Set-Content $destination_file;
+    - name: update prod configuration file
+      shell: powershell
+      if: ${{inputs.env == 'prod'}}
+      run: >
+        $original_file = "${{vars.PROD_CONFIG_DIR}}\\fe\\config.ts";
+        $destination_file =  "${{github.workspace}}\\src\\appjsLegacy\\config.ts";
+        (Get-Content $original_file) | Foreach-Object {
+            $_ -replace "CONFIG_ENVIRONMENT", "${{vars.PROD_CONFIG_ENV}}" `
+               -replace "CONFIG_DISPLAY_NAME", "${{vars.PROD_DISPLAY_NAME}}" `
+               -replace "CONFIG_CURRENT_VERSION", "${{vars.PROD_CONFIG_CURRENT_VERSION}}" `
+               -replace "CONFIG_PUBLIC_OR_PRIVATE", "${{vars.PROD_CONFIG_PUBLIC_OR_PRIVATE}}" `
+               -replace "CONFIG_SERVER_URL", "${{vars.PROD_CONFIG_SERVER_URL}}" `
+               -replace "CONFIG_REPORT_SERVER_URL", "${{vars.PROD_CONFIG_REPORT_SERVER_URL}}" `
+               -replace "CONFIG_PROJECT_REPORT_SERVER", "${{vars.PROD_CONFIG_PROJECT_REPORT_SERVER}}" `
+               -replace "CONFIG_SYSTEM_LOCATION_DATASET", "${{vars.PROD_CONFIG_SYSTEM_LOCATION_DATASET}}" `
+               -replace "CONFIG_FISHERMEN_DATASETID", "${{vars.PROD_CONFIG_FISHERMEN_DATASETID}}" `
+               -replace "CONFIG_SEASONS_DATASETID", "${{vars.PROD_CONFIG_SEASONS_DATASETID}}" `
+               -replace "CONFIG_SERVICES_LAYER_CONFIG_FARM", "${{vars.PROD_CONFIG_SERVICES_LAYER_CONFIG_FARM}}"`
+               -replace "CONFIG_HOST_SERVER", "${{vars.PROD_HOST_SERVER}}"`
+               -replace "CONFIG_SERVICE_URL", "${{vars.PROD_CONFIG_SERVICE_URL}}"`
+               -replace "CONFIG_DATASET_RECORDS_EXPORT_FORMAT_THRESHOLD", "${{vars.PROD_CONFIG_DATASET_RECORDS_EXPORT_FORMAT_THRESHOLD}}"`
+               -replace "CONFIG_BACKGROUND_IMAGE", "${{vars.UI_CONFIG_BACKGROUND_IMAGE}}"`
+               -replace "CONFIG_VERSION", "${{vars.UI_CONFIG_VERSION}}"`
+               -replace "CONFIG_WELCOME_TEXT", "${{vars.UI_CONFIG_WELCOME_TEXT}}"`
+               -replace "CONFIG_HEADER_TEXT", "${{vars.UI_CONFIG_HEADER_TEXT}}"`
+               -replace "CONFIG_METADATA_PROGRAM", "${{vars.PROD_CONFIG_METADATA_PROGRAM}}"`
+               -replace "CONFIG_METADATA_SUBPROGRAM", "${{vars.PROD_CONFIG_METADATA_SUBPROGRAM}}"`
+               -replace "CONFIG_METADATA_MAPIMAGE", "${{vars.PROD_CONFIG_METADATA_MAPIMAGE}}"`
+               -replace "CONFIG_METADATA_MAP_IMAGE_HTML", "${{vars.PROD_CONFIG_METADATA_MAP_IMAGE_HTML}}"`
+               -replace "CONFIG_METADATA_SUMMARYIMAGE", "${{vars.PROD_CONFIG_METADATA_SUMMARYIMAGE}}"`
+               -replace "CONFIG_METADATA_SUMMARY_IMAGE_HTML", "${{vars.PROD_CONFIG_METADATA_SUMMARY_IMAGE_HTML}}"`
+               -replace "CONFIG_METADATA_PROJECT_GOAL", "${{vars.PROD_CONFIG_METADATA_PROJECT_GOAL}}"`
+               -replace "CONFIG_METADATA_PROJECT_OBJECTIVES", "${{vars.PROD_CONFIG_METADATA_PROJECT_OBJECTIVES}}"`
+               -replace "CONFIG_METADATA_INPUTS", "${{vars.PROD_CONFIG_METADATA_PROJECT_INPUTS}}"`
+               -replace "CONFIG_METADATA_COLLABORATORS", "${{vars.PROD_CONFIG_METADATA_PROJECT_COLLABORATORS}}"`
+               -replace "CONFIG_DATASTORE_ACTIVITYSYSTEMFIELDS", "${{vars.PROD_DATASTORE_ACTIVITYSYSTEMFIELDS}}"
+        } | Set-Content $destination_file;
+
+    - run: npm i
+    - run: npm run build
+    - run: npm run test-headless
+    - run:  Copy-Item -Path "${{vars.DEV_CONFIG_DIR}}\\fe\\web.config" -Destination "${{github.workspace}}\dist\\cdms-fe\\web.config" -Force -Verbose;
+      if: ${{inputs.env != 'prod'}}
+      shell: powershell
+    - run:  Copy-Item -Path "${{vars.PROD_CONFIG_DIR}}\\fe\\web.config" -Destination "${{github.workspace}}\dist\\cdms-fe\\web.config" -Force -Verbose;
+      if: ${{inputs.env == 'prod'}}
+      shell: powershell
+
+  back_up_existing_staging:
+    runs-on: [self-hosted, windows, x64, staging]
+    if: ${{inputs.env == 'staging' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor)}}
+    needs: [build_and_test]
+    steps:
+      - name: Copy files from staging directory
+        shell: powershell
+        run: $now = Get-Date -Format  "MM-dd-yyyy-HHmm"; $backupDir = -join("${{vars.DEV_FE_BACKUP_DIR}}","\\tribalCDMS_core_fe-",$now); mkdir $backupDir; Copy-Item -Path "${{vars.DEV_FE_BUILD_DIR}}\\*" -Destination $backupDir -Recurse -Exclude node_modules
+
+  back_up_existing_production:
+    runs-on: [self-hosted, windows, x64, production]
+    if: ${{inputs.env == 'prod' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor)}}
+    needs: [build_and_test]
+    steps:
+      - name: Copy files from production directory
+        shell: powershell
+        run: $now = Get-Date -Format  "MM-dd-yyyy-HHmm"; $backupDir = -join("${{vars.PROD_FE_BACKUP_DIR}}","\\tribalCDMS_core_fe-",$now); mkdir $backupDir; Copy-Item -Path "${{vars.PROD_FE_BUILD_DIR}}\\*" -Destination $backupDir -Recurse -Exclude node_modules
+
+  deploy_to_staging:
+    runs-on: [self-hosted, windows, x64, staging]
+    needs: [build_and_test, back_up_existing_staging]
+    if: ${{inputs.env == 'staging' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor)}}
+    steps:
+      - name: Deploy Staging Site
+        if: ${{inputs.env == 'staging'}}
+        shell: powershell
+        run: >
+          Copy-Item -Path "${{github.workspace}}\\dist\\cdms-fe\\*" -Destination "${{vars.DEV_OUT_DIR}}\\dist\\cdms-fe\\" -Recurse -Force -Verbose;
+
+  publish_artifact:
+    runs-on: [self-hosted, windows, x64, staging]
+    needs: [build_and_test, back_up_existing_production]
+    if: ${{inputs.env == 'prod' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor) }}
+    steps:
+      - name: Create prod zip
+        shell: powershell
+        run: >
+          $outzip = -join("${{github.workspace}}","\\tribalCDMS_core_fe_archive");
+          Compress-Archive -Path "${{github.workspace}}\\dist\\cdms-fe" -DestinationPath $outzip;
+      - name: Publish Production Backend to Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: [your-org]-prod-frontend
+          path: ${{github.workspace}}/tribalCDMS_core_fe_archive.zip
+
+  deploy_to_production:
+    runs-on: [self-hosted, windows, x64, production]
+    needs: [build_and_test, back_up_existing_production, publish_artifact]
+    if: ${{inputs.env == 'prod' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor) }}
+    steps:
+    - name: Download a single artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: [your-org]-prod-frontend
+    - name: Deploy Production Site
+      shell: powershell
+      run: >
+        Expand-Archive -Path "${{github.workspace}}\\tribalCDMS_core_fe_archive.zip" -DestinationPath "${{github.workspace}}\\prod-build" -Force;
+        Copy-Item -Path "${{github.workspace}}\\prod-build\\cdms-fe\\*" -Destination "${{vars.PROD_OUT_DIR}}\\dist\\cdms-fe\\" -Recurse -Force -Verbose;
