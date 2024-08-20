@@ -1,0 +1,214 @@
+# Place this file in .github/workflows
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+# Replace [your-org] with your organization name - i.e. Build, Test, and Deploy CTUIR CDMS
+
+name: Build, Test, and Deploy [your-org] CDMS
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Pick a deployment environment'
+        required: true
+        default: 'build_test_only'
+        type: choice
+        options:
+          - staging
+          - prod
+          - build_test_only
+        
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs: 
+  check_dispatch_runner:
+    runs-on: [self-hosted, windows, x64, staging]
+  
+    steps:
+      - name: deny
+        if: ${{ github.event_name == 'workflow_dispatch' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor) == false }} 
+        shell: powershell
+        run: 
+          echo '${{github.actor}}, you do not have permission to deploy using ${{github.event_name}}';
+          exit 1;
+      - name: approve
+        shell: powershell
+        if: ${{ github.event_name != 'workflow_dispatch' || contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor) }}
+        run: 
+          echo '${{github.actor}} is deploying to ${{inputs.env}}';
+      
+    
+          
+      
+  build:
+    runs-on: [self-hosted, windows, x64, staging]
+    needs: [check_dispatch_runner]
+    steps:
+    - uses: actions/checkout@v4
+    ########### USE WITH windows-latest RUNNER ###########
+    # - uses: actions/checkout@v4
+    # - name: Setup .NET
+    #   uses: actions/setup-dotnet@v4
+    #   with:
+    #     dotnet-version: 7.0.x
+    # - name: Add msbuild to PATH
+    #   uses: microsoft/setup-msbuild@v2
+    ########## USE WITH self-hosted RUNNER #############
+    - name: Copy and update web.config for dev environment
+      if: ${{inputs.env != 'prod'}}
+      run: >
+        $input_web_config_file = "${{vars.DEV_CONFIG_DIR}}\\Web.config.template";
+        $output_web_config_file =  "${{github.workspace}}\\Web.config";
+        (Get-Content $input_web_config_file) | Foreach-Object {
+            $_ -replace "CONFIG_PATHTOSERVICES", "${{vars.DEV_CONFIG_PATHTOSERVICES}}" `
+               -replace "CONFIG_UPLOADSDIRECTORY", "${{vars.DEV_CONFIG_UPLOADSDIRECTORY}}" `
+               -replace "CONFIG_UPLOADSLINKPREFIX", "${{vars.DEV_CONFIG_UPLOADSLINKPREFIX}}" `
+               -replace "FLOG_FILE_LOCATION", "${{vars.DEV_CONFIG_FLOG_FILE_LOCATION}}" `
+               -replace "MASQUERADE_TEXT", "${{secrets.DEV_CONFIG_MASQUERADE_TEXT}}" `
+               -replace "DB_SERVER", "${{vars.DEV_DB_SERVER}}" `
+               -replace "DB_DATABASE", "${{vars.DEV_DB_DATABASE}}" `
+               -replace "DB_USER", "${{secrets.DEV_DB_USERNAME}}" `
+               -replace "DB_PW", "${{secrets.DEV_DB_PASSWORD}}"`
+               -replace "CONFIG_DEFAULT_PROJECT_TYPE", "${{vars.DEV_CONFIG_DEFAULT_PROJECT_TYPE}}"`
+               -replace "CONFIG_DEFAULT_SOURCE_ID", "${{vars.DEV_CONFIG_DEFAULT_SOURCE_ID}}"`
+               -replace "CONFIG_PATH_STREAMNET_SYNC", "${{vars.DEV_CONFIG_PATH_STREAMNET_SYNC}}"`
+               -replace "CONFIG_SALT", "${{secrets.DEV_CONFIG_SALT}}"
+        } | Set-Content $output_web_config_file;
+                    
+        Copy-Item -Path $output_web_config_file -Destination "${{github.workspace}}\\services\\Web.config";
+    - name: Copy and update web.config for prod environment
+      if: ${{inputs.env == 'prod'}}
+      run: >
+        $input_web_config_file = "${{vars.PROD_CONFIG_DIR}}\\Web.config.template";
+        $output_web_config_file =  "${{github.workspace}}\\Web.config";
+        (Get-Content $input_web_config_file) | Foreach-Object {
+            $_ -replace "CONFIG_PATHTOSERVICES", "${{vars.PROD_CONFIG_PATHTOSERVICES}}" `
+               -replace "CONFIG_UPLOADSDIRECTORY", "${{vars.PROD_CONFIG_UPLOADSDIRECTORY}}" `
+               -replace "CONFIG_UPLOADSLINKPREFIX", "${{vars.PROD_CONFIG_UPLOADSLINKPREFIX}}" `
+               -replace "FLOG_FILE_LOCATION", "${{vars.PROD_CONFIG_FLOG_FILE_LOCATION}}" `
+               -replace "MASQUERADE_TEXT", "${{secrets.PROD_CONFIG_MASQUERADE_TEXT}}" `
+               -replace "DB_SERVER", "${{vars.PROD_DB_SERVER}}" `
+               -replace "DB_DATABASE", "${{vars.PROD_DB_DATABASE}}" `
+               -replace "DB_USER", "${{secrets.PROD_DB_USERNAME}}" `
+               -replace "DB_PW", "${{secrets.PROD_DB_PASSWORD}}"`
+               -replace "CONFIG_DEFAULT_PROJECT_TYPE", "${{vars.PROD_CONFIG_DEFAULT_PROJECT_TYPE}}"`
+               -replace "CONFIG_DEFAULT_SOURCE_ID", "${{vars.PROD_CONFIG_DEFAULT_SOURCE_ID}}"`
+               -replace "CONFIG_PATH_STREAMNET_SYNC", "${{vars.PROD_CONFIG_PATH_STREAMNET_SYNC}}"`
+               -replace "CONFIG_SALT", "${{secrets.PROD_CONFIG_SALT}}"
+        } | Set-Content $output_web_config_file;
+                    
+        Copy-Item -Path $output_web_config_file -Destination "${{github.workspace}}\\services\\Web.config";
+    - name: Restore packages and Build
+      run: >
+        $msbuild = "${{vars.MSBUILD_PATH}}";
+        & $msbuild "${{github.workspace}}\\services.sln" -t:restore -p:RestorePackagesConfig=true;
+        & $msbuild "${{github.workspace}}\\services.sln" -p:Configuration=release -p:Platform="any cpu";
+        Copy-Item -Path "${{github.workspace}}\\services\\Web.config" -Destination "${{github.workspace}}\\services\\bin\\Web.config" -Force -Verbose;
+    
+    - name: Unit Tests
+      run: dotnet test "${{github.workspace}}\\HelperUnitTests\\bin\\Release\\net462\\UnitTests.dll";
+    
+  back_up_existing_staging:
+    runs-on: [self-hosted, windows, x64, staging]
+    needs: [build]
+    # leaving these in as an additional check in case other steps are modified and it gets removed accidentally
+    if: ${{inputs.env == 'staging' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor)}}
+    steps:
+      - name: Copy files from staging directory
+        shell: powershell
+        run: $now = Get-Date -Format  "MM-dd-yyyy-HHmm"; $backupDir = -join("${{vars.DEV_BACKUP_DIR}}","\\tribalCDMS_core_be-",$now); mkdir $backupDir; Copy-Item -Path "${{vars.DEV_SERVICES_DIR}}\\*" -Destination $backupDir -Recurse 
+     
+  back_up_existing_production:
+    runs-on: [self-hosted, windows, x64, production]
+    needs: [build]
+    if: ${{inputs.env == 'prod' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor)}}
+    steps:
+       - name: Copy files from production directory
+         shell: powershell
+         run: $now = Get-Date -Format  "MM-dd-yyyy-HHmm"; $backupDir = -join("${{vars.PROD_BACKUP_DIR}}","\\tribalCDMS_core_be-",$now); mkdir $backupDir; Copy-Item -Path "${{vars.PROD_SERVICES_DIR}}\\*" -Destination $backupDir -Recurse
+  # backup_database_staging:
+  #   runs-on: [self-hosted, windows, x64, staging]
+  #   if: ${{inputs.env == 'staging' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor)}}
+  #   needs: [build, back_up_existing]
+  #   steps:
+  #     - name: Backup Database
+  #       shell: powershell
+  #       run: >
+  #         $password = ConvertTo-SecureString "${{secrets.DEV_DB_PASSWORD}}" -AsPlainText -Force
+  #         $credential = New-Object System.Management.Automation.PSCredential ("${{secrets.DEV_DB_USERNAME}}", $password)
+  #         Backup-SqlDatabase -ServerInstance "${{vars.DEV_DB_SERVER}}" -Database "${{vars.DEV_DB_DATABASE}}" -Credential $credential 
+  # backup_database_production:
+  #   runs-on: [self-hosted, windows, x64, production]
+  #   if: ${{inputs.env == 'prod' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor)}}
+  #   needs: [build, back_up_existing]
+  #   steps:
+  #     - name: Backup Database
+  #       shell: powershell
+  #       run: >
+  #         $password = ConvertTo-SecureString "${{secrets.PROD_DB_PASSWORD}}" -AsPlainText -Force
+  #         $credential = New-Object System.Management.Automation.PSCredential ("${{secrets.PROD_DB_USERNAME}}", $password)
+  #         Backup-SqlDatabase -ServerInstance "${{vars.PROD_DB_SERVER}}" -Database "${{vars.PROD_DB_DATABASE}}" -Credential $credential    
+          
+  # run_migrations_staging:
+  #   if: ${{ inputs.env == 'staging' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor) }}
+  #   runs-on: [self-hosted, windows, x64, staging]
+  #   needs: [build, back_up_existing, backup_database]
+  #   steps:
+  #     - name: Run Migrations
+  #       shell: powershell
+  #       run: >
+  #         $ef6 = "${{github.workspace}}\packages\EntityFramework.6.4.4\tools\net45\any\ef6.exe" 
+  #         & $ef6 database update --verbose --assembly "${{github.workspace}}\\services\\bin\\services.dll" --config="${{github.workspace}}\\services\\Web.config"
+  
+  # run_migrations_prod:
+  #   if: ${{ inputs.env == 'prod' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor) }}
+  #   runs-on: [self-hosted, windows, x64, staging]
+  #   needs: [build, back_up_existing, backup_database]
+  #   steps:
+  #     - name: Run Migrations
+  #       shell: powershell
+  #       run: >
+  #         $ef6 = "${{github.workspace}}\packages\EntityFramework.6.4.4\tools\net45\any\ef6.exe" 
+  #         & $ef6 database update --verbose --assembly "${{github.workspace}}\\services\\bin\\services.dll" --config="${{github.workspace}}\\services\\Web.config"
+  
+  deploy_to_staging:
+    runs-on: [self-hosted, windows, x64, staging]
+    if: ${{inputs.env == 'staging' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor) }}
+    # needs: [build, back_up_existing, backup_database, run_migrations]`
+    needs: [build, back_up_existing_staging]
+    steps:
+      - name: Deploy Staging Site
+        shell: powershell
+        run: >
+          Copy-Item -Path "${{github.workspace}}\\services\\*" -Destination "${{vars.DEV_OUT_DIR}}\\services" -Recurse -Force -Verbose;
+          Copy-Item -Path "${{github.workspace}}\\services\\Web.config" -Destination "${{vars.DEV_OUT_DIR}}\\services\\bin\\Web.config" -Force -Verbose;
+  publish_artifact:
+    runs-on: [self-hosted, windows, x64, staging]
+    needs: [build, back_up_existing_production]
+    if: ${{inputs.env == 'prod' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor) }}
+    steps:
+      - name: Publish Production Backend to Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: [your-org]-prod-backend
+          path: ${{github.workspace}}/services/
+          
+        
+  deploy_to_production:
+    runs-on: [self-hosted, windows, x64, production]
+    needs: [build, back_up_existing_production, publish_artifact]
+    if: ${{inputs.env == 'prod' && contains(fromJSON(vars.DEPLOY_MEMBERS), github.actor) }}
+    steps:
+    - name: Download a single artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: [your-org]-prod-backend
+    - name: Deploy Production Site 
+      shell: powershell
+      run: >
+          Copy-Item -Path "${{github.workspace}}\\*" -Destination "${{vars.PROD_OUT_DIR}}\\services" -Recurse -Force -Verbose;
+          Copy-Item -Path "${{github.workspace}}\\Web.config" -Destination "${{vars.PROD_OUT_DIR}}\\services\\bin\\Web.config" -Force -Verbose;
+      
